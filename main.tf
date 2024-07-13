@@ -49,7 +49,7 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   comment             = "Kok Hui CloudFront Follow-up w OAC"
   default_root_object = "index.html"
 
-
+  web_acl_id = aws_wafv2_web_acl.ex.arn
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
@@ -81,4 +81,48 @@ resource "aws_cloudfront_origin_access_control" "oac" {
 }
 
 
+resource "aws_wafv2_web_acl" "ex" {
+  name        = "waf-webacl"
+  description = "Example of a managed rule in cloudfront"
+  scope       = "CLOUDFRONT"
+  provider    = aws.us-east-1
 
+  visibility_config {
+    cloudwatch_metrics_enabled = false
+    metric_name = "testing123"
+    sampled_requests_enabled = false
+
+  }
+  default_action {
+    allow {}
+  }
+
+
+  rule {
+    name = "my-first-rule"
+    priority = 1
+    override_action {
+      none {}
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = false
+      metric_name = "first-rule-metric"
+      sampled_requests_enabled = false
+    }
+
+    statement {
+      managed_rule_group_statement {
+        name = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+        rule_action_override {
+          action_to_use {
+            block{}
+          }
+          name = "SizeRestrictions_QUERYSTRING"
+        }
+    
+      }
+    }
+  }
+}
